@@ -1,0 +1,48 @@
+name: Build NYXOR for Windows
+on:
+  workflow_dispatch:
+    inputs:
+      identity_name:
+        description: "Store identity name (Partner Center > Product identity). Leave the default to just build the installer."
+        default: "NYXOR.Local"
+      publisher:
+        description: "Store publisher (looks like CN=xxxxxxxx-xxxx-...). Leave the default for the installer only."
+        default: "CN=NYXOR Local"
+      publisher_display:
+        description: "Your name as shown to users"
+        default: "NYXOR"
+      support_email:
+        description: "Support email (shown in the privacy page)"
+        default: ""
+      privacy_url:
+        description: "Public web address of your privacy policy"
+        default: ""
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Inno Setup (makes the installer)
+        run: choco install innosetup -y --no-progress
+      - name: Self-test (information only, never blocks the build)
+        continue-on-error: true
+        run: python server.py --selftest
+      - name: Build installer and Store package
+        shell: pwsh
+        env:
+          IDN: ${{ inputs.identity_name }}
+          PUB: ${{ inputs.publisher }}
+          PUBD: ${{ inputs.publisher_display }}
+          MAIL: ${{ inputs.support_email }}
+          URL: ${{ inputs.privacy_url }}
+        run: ./windows/build_windows.ps1 -IdentityName "$env:IDN" -Publisher "$env:PUB" -PublisherDisplay "$env:PUBD" -SupportEmail "$env:MAIL" -PrivacyUrl "$env:URL" -SkipTests
+      - name: Save the results
+        uses: actions/upload-artifact@v4
+        with:
+          name: NYXOR-for-Windows
+          path: |
+            dist/NYXOR-Setup.exe
+            dist/msix/*.msix
