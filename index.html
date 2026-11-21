@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>NYXOR — Local AI Workspace</title>
+<meta name="description" content="NYXOR — a local AI workspace: chat with local or cloud models, research the web, build files. Your data stays on your PC.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111114'/%3E%3Ccircle cx='16' cy='16' r='13.8' fill='%23ffffff' opacity='.07'/%3E%3Cpath d='M16 2.2a13.8 13.8 0 1 0 13.8 13.8' fill='none' stroke='%23ffffff' stroke-width='1.9' stroke-linecap='round'/%3E%3Cpath d='M10.3 21.8V10.2h2.8l5.7 7.3v-7.3h2.8v11.6h-2.8l-5.7-7.3v7.3z' fill='%23ffffff'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="boot" class="boot" role="status" aria-live="polite">
+  <pre id="bootLog" class="boot-log"></pre>
+  <button id="bootSkip" class="boot-skip">Skip ▸</button>
+</div>
+
+<!-- VAULT: nothing is readable until this is unlocked -->
+<div id="lock" class="lockscreen" hidden>
+  <form id="lockForm" class="lockcard panel" autocomplete="off">
+    <div class="lock-mark" aria-hidden="true"><svg viewBox="0 0 32 32" width="34" height="34"><path d="M4 16 L16 4 L28 16 L16 28 Z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="currentColor"/></svg></div>
+    <h2 class="ph" id="lockTitle"><span>▣</span>VAULT SEALED</h2>
+    <p class="lock-sub" id="lockSub"></p>
+    <label class="fld"><span id="lockLabel">Passphrase</span><input id="lockPass" type="password" autocomplete="current-password" spellcheck="false"></label>
+    <label class="fld" id="lockConfirmRow" hidden><span>Repeat passphrase</span><input id="lockPass2" type="password" autocomplete="new-password" spellcheck="false"></label>
+    <div class="modal-status bad" id="lockErr" hidden></div>
+    <div class="modal-actions"><button type="button" class="ghost-btn" id="lockAlt">USE RECOVERY CODE</button><span class="sp"></span><button type="submit" class="send" id="lockGo">UNLOCK</button></div>
+  </form>
+  <div id="recoveryCard" class="lockcard panel" hidden>
+    <h2 class="ph"><span>⚠</span>SAVE YOUR RECOVERY CODE</h2>
+    <p class="lock-sub">This is the only way back in if you forget your passphrase. It is shown once. Nobody, including NYXOR, can reset it.</p>
+    <pre id="recoveryCode" class="recovery"></pre>
+    <div class="modal-actions"><button type="button" class="ghost-btn" id="recCopy">COPY</button><button type="button" class="ghost-btn" id="recSave">DOWNLOAD .txt</button><span class="sp"></span></div>
+    <label class="chk"><input type="checkbox" id="recOk"> I have stored it somewhere safe</label>
+    <div class="modal-actions"><span class="sp"></span><button type="button" class="send" id="recGo" disabled>ENTER</button></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="secbar" id="secbar" role="region" aria-label="Security status"><span class="sb-title">Security</span><span class="sb-items" id="secItems"></span><span class="sb-right">Private &middot; on this PC</span></div>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" role="img" aria-label="NYXOR logo"><circle cx="16" cy="16" r="13.8" fill="currentColor" opacity=".07"/><path d="M16 2.2a13.8 13.8 0 1 0 13.8 13.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M10.3 21.8V10.2h2.8l5.7 7.3v-7.3h2.8v11.6h-2.8l-5.7-7.3v7.3z" fill="currentColor"/></svg>
+      <div>
+        <div class="brand-name">NYXOR</div>
+        <div class="brand-sub">Private code agent</div>
+      </div>
+    </div>
+    <nav class="top-stats" aria-label="System status">
+      <div class="ts"><span class="k">STATE</span><span class="v" id="stateLabel">DORMANT</span></div>
+      <div class="ts hide-sm"><span class="k">UPTIME</span><span class="v" id="uptime">00:00:00</span></div>
+      <div class="ts hide-sm"><span class="k">MODELS</span><span class="v" id="nodeCount">0</span></div>
+      <div class="ts"><span class="k">MODEL</span><span class="v model-v"><i class="dot" id="linkDot"></i><span id="modelLabel">OFFLINE</span></span></div>
+      <div class="ts"><span class="k">ALERTS</span><span class="v threat" id="threat">0</span></div>
+    </nav>
+    <div class="top-actions">
+      <button class="icon-btn" id="lockBtn" title="Lock the vault now"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="lbl">LOCK</span></button>
+      <button class="icon-btn" id="videoBtn" title="Video studio"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="13" height="12" rx="1.5"/><path d="m16 10 5-3v10l-5-3"/></svg><span class="lbl">VIDEO</span></button>
+      <button class="icon-btn" id="systemsBtn" title="Providers, council, agent, web, voice, security, memory"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span class="lbl">SYSTEMS</span></button>
+      <button class="icon-btn" id="voiceBtn" aria-pressed="false" title="Speak replies aloud"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path id="voiceWave" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" opacity=".3"/></svg><span class="lbl">VOICE</span></button>
+      <button class="icon-btn" id="vcBtn" aria-pressed="false" title="Voice control: say “Nyxor, …”"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg><span class="lbl">LISTEN</span></button>
+      <button class="icon-btn" id="micBtn" title="Dictate one message"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span class="lbl">MIC</span></button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <aside class="col left">
+      <section class="panel">
+        <h2 class="ph">System</h2>
+        <div class="meters" id="meters"></div>
+      </section>
+      <section class="panel">
+        <h2 class="ph">Chats</h2>
+        <div class="arc-head">
+          <input id="chatSearch" type="search" placeholder="search chats…" aria-label="Search chats" spellcheck="false">
+          <button type="button" class="ghost-btn sm" id="newChat">NEW</button>
+        </div>
+        <ul class="chats" id="chats" aria-label="Past chats"></ul>
+      </section>
+      <section class="panel grow">
+        <h2 class="ph">Models</h2>
+        <div class="caps" id="caps"></div>
+      </section>
+    </aside>
+
+    <section class="col center">
+      <div class="console panel" id="console">
+        <div class="console-head">
+          <h2 class="ph">Conversation</h2>
+          <div class="modebar">
+            <div class="seg" id="modeSeg" role="group" aria-label="Mode">
+              <button type="button" data-mode="direct">DIRECT</button>
+              <button type="button" data-mode="council">COUNCIL</button>
+              <button type="button" data-mode="agent">AGENT</button>
+            </div>
+            <span class="sel-label" id="selLabel"></span>
+            <select id="modelSel" aria-label="Model"></select>
+            <button type="button" class="ghost-btn sm" id="rosterBtn" hidden title="Choose who sits on the council">MEMBERS</button>
+            <button type="button" class="ghost-btn sm" id="focusBtn" title="Give the chat more room">⤢</button>
+          </div>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="offline" id="offline" hidden>Run locally to enable models and memory — <code>python server.py</code>. The scripted persona still answers.</div>
+        <div class="modenote" id="modeNote" hidden></div>
+        <div class="txwrap"><div class="transcript" id="transcript" aria-live="polite"></div><button type="button" class="jump" id="jumpBtn" hidden title="Jump to the latest message">↓ LATEST</button></div>
+        <div class="tray" id="tray" hidden></div>
+        <form class="composer" id="prompt" autocomplete="off">
+          <button type="button" class="tool-btn" id="attachBtn" title="Attach images or files (or drop / paste them)" aria-label="Attach files"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4L15 7"/></svg></button>
+          <input type="file" id="fileIn" multiple hidden accept="image/*,.txt,.md,.pdf,.docx,.csv,.json,.html,.css,.js,.ts,.py,.java,.c,.cpp,.cs,.go,.rs,.sh,.sql,.xml,.yml,.yaml,.toml,.log">
+          <textarea id="input" rows="1" placeholder="Speak to NYXOR, or type /help" aria-label="Message NYXOR" spellcheck="false"></textarea>
+          <button type="button" class="tool-btn web" id="webBtn" title="Web research: AUTO" aria-label="Web research"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><b id="webTag">AUTO</b></button>
+          <button type="submit" class="send">TRANSMIT</button>
+        </form>
+      </div>
+      <section class="drawer" id="drawer" hidden aria-label="Terminal">
+        <div class="dr-head"><span class="dr-title">Terminal</span><span class="dr-cwd" id="termCwd"></span><span class="sp"></span>
+          <button type="button" class="ghost-btn sm" id="termKill" hidden>Stop</button><button type="button" class="ghost-btn sm" id="termClear">Clear</button><button type="button" class="ghost-btn sm" id="termClose" title="Close (Ctrl+`)">Close</button></div>
+        <pre class="term-out" id="termOut" tabindex="0"></pre>
+        <div class="term-off" id="termOff" hidden>The terminal is switched off. It runs commands on this PC as you, inside your allowed folders. <button type="button" class="ghost-btn sm" id="termEnable">Review and enable</button></div>
+        <form class="term-in" id="termForm" autocomplete="off"><span class="term-ps">$</span><input id="termInput" spellcheck="false" placeholder="Run a command in the workspace (Enter to run, Up for history)"></form>
+      </section>
+    </section>
+
+    <aside class="col right">
+      <section class="panel grow">
+        <div class="rtabs" role="tablist">
+          <button type="button" role="tab" class="on" data-rt="log">Activity</button>
+          <button type="button" role="tab" data-rt="files">Files <b id="fileCount">0</b></button>
+        </div>
+        <ul class="log" id="log"></ul>
+        <div class="filespane" id="filesPane" hidden>
+          <div id="filesList" class="fl"></div>
+          <a class="ghost-btn sm" id="zipAll" href="#" hidden>DOWNLOAD ALL (.zip)</a>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footbar">
+    <span>NYXOR v2.3.0</span>
+    <button type="button" class="fb-btn" id="termBtn" title="Terminal (Ctrl+`)">Terminal</button>
+    <button type="button" class="fb-btn" id="palBtn" title="Command palette (Ctrl+K)">Commands <kbd>Ctrl K</kbd></button>
+    <span class="sp"></span>
+    <span class="hide-sm" id="vaultNote">Vault: <b>sealed</b></span>
+    <span id="clock">--:--:--</span>
+  </footer>
+</div>
+
+<!-- SYSTEMS -->
+<div class="modal" id="sysModal" role="dialog" aria-modal="true" aria-labelledby="sysTitle" hidden>
+  <div class="modal-card panel wide">
+    <h2 class="ph" id="sysTitle"><span>∞</span>SYSTEMS</h2>
+    <div class="tabs" id="sysTabs" role="tablist">
+      <button type="button" data-tab="providers" class="on">PROVIDERS</button>
+      <button type="button" data-tab="router">ROUTER</button>
+      <button type="button" data-tab="budgets">BUDGETS</button>
+      <button type="button" data-tab="council">COUNCIL</button>
+      <button type="button" data-tab="agent">AGENT</button>
+      <button type="button" data-tab="persona">PERSONA</button>
+      <button type="button" data-tab="web">WEB</button>
+      <button type="button" data-tab="voice">VOICE</button>
+      <button type="button" data-tab="security">SECURITY</button>
+      <button type="button" data-tab="privacy">PRIVACY</button>
+      <button type="button" data-tab="memory">MEMORY</button>
+    </div>
+    <div class="panes">
+      <section class="pane" data-pane="providers"></section><section class="pane" data-pane="router" hidden></section><section class="pane" data-pane="budgets" hidden></section><section class="pane" data-pane="council" hidden></section>
+      <section class="pane" data-pane="agent" hidden></section><section class="pane" data-pane="persona" hidden></section>
+      <section class="pane" data-pane="web" hidden></section><section class="pane" data-pane="voice" hidden></section>
+      <section class="pane" data-pane="security" hidden></section><section class="pane" data-pane="privacy" hidden></section><section class="pane" data-pane="memory" hidden></section>
+    </div>
+    <div class="modal-status" id="sysStatus"></div>
+    <div class="modal-actions"><span class="sp"></span><button type="button" class="ghost-btn" id="sysClose">CLOSE</button><button type="button" class="send" id="sysApply">APPLY</button></div>
+  </div>
+</div>
+
+<!-- VIDEO STUDIO -->
+<div class="modal" id="vidModal" role="dialog" aria-modal="true" aria-labelledby="vidTitle" hidden>
+  <div class="modal-card panel wide">
+    <h2 class="ph" id="vidTitle"><span>▶</span>VIDEO STUDIO</h2>
+    <div class="vid-grid">
+      <div class="vid-form">
+        <label class="fld"><span>Back-end</span><select id="vBackend"></select></label>
+        <div class="slot vid-colab" id="vColab" hidden>
+          <div class="slot-h"><b>Free GPU on Google Colab</b></div>
+          <ol class="steps">
+            <li>Download the notebook, open <b>colab.research.google.com</b> → File → Upload notebook.</li>
+            <li>Runtime → Change runtime type → <b>T4 GPU</b>, then run the 3 cells.</li>
+            <li>Paste the connect string it prints here:</li>
+          </ol>
+          <div class="row2"><input id="vConnect" placeholder="https://….trycloudflare.com?token=…" spellcheck="false" autocomplete="off"><button type="button" class="ghost-btn" id="vConnectGo">CONNECT</button></div>
+          <div class="row2"><a class="ghost-btn sm" href="/api/colab/notebook" download>DOWNLOAD NOTEBOOK</a><span class="ss" id="vColabSs"></span></div>
+        </div>
+        <label class="fld"><span>Prompt</span><textarea id="vPrompt" rows="4" placeholder="A chrome sentinel walks through rain-soaked neon streets, cinematic, slow camera push-in" spellcheck="false"></textarea></label>
+        <div class="fld-row"><label class="fld"><span>Steps</span><input id="vSteps" type="number" min="1" max="100" value="30"></label>
+          <label class="fld"><span>Frames</span><input id="vFrames" type="number" min="9" max="97" value="49"></label>
+          <label class="fld"><span>Seed (optional)</span><input id="vSeed" type="number" min="0"></label></div>
+        <div class="modal-status" id="vStatus">Free Colab T4: expect roughly 5–15 minutes per short clip. Replicate / fal.ai are faster and paid.</div>
+        <div class="modal-actions"><span class="sp"></span><button type="button" class="send" id="vGo">GENERATE</button></div>
+      </div>
+      <div class="vid-jobs" id="vJobs"></div>
+    </div>
+    <div class="modal-actions"><span class="sp"></span><button type="button" class="ghost-btn" id="vClose">CLOSE</button></div>
+  </div>
+</div>
+
+<!-- GAME / PAGE PREVIEW (sandboxed: no network, no access to your data) -->
+<div class="modal" id="prevModal" role="dialog" aria-modal="true" aria-labelledby="prevTitle" hidden>
+  <div class="modal-card panel wide prevcard">
+    <h2 class="ph" id="prevTitle"><span>▶</span>PREVIEW</h2>
+    <iframe id="prevFrame" class="prevframe" sandbox="allow-scripts allow-modals allow-pointer-lock" referrerpolicy="no-referrer" title="Preview"></iframe>
+    <div class="modal-status">Runs sandboxed: it cannot reach the network, your chats or your keys. Click inside it to give it the keyboard. High scores reset on reload.</div>
+    <div class="modal-actions"><button type="button" class="ghost-btn" id="prevReload">RELOAD</button><span class="sp"></span><button type="button" class="ghost-btn" id="prevClose">CLOSE</button></div>
+  </div>
+</div>
+
+<!-- FILE VIEWER + SOURCE READER -->
+<div class="modal" id="viewModal" role="dialog" aria-modal="true" aria-labelledby="viewTitle" hidden>
+  <div class="modal-card panel wide">
+    <h2 class="ph" id="viewTitle"><span>▤</span>FILE</h2>
+    <div class="reader-meta" id="viewMeta" hidden></div>
+    <pre class="viewer" id="viewBody"></pre>
+    <div class="modal-actions"><button type="button" class="ghost-btn" id="viewCopy" hidden>COPY LINK</button><span class="sp"></span><button type="button" class="ghost-btn" id="viewClose">CLOSE</button></div>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div class="modal" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <div class="modal-card pal-card"><input id="palInput" placeholder="Type a command" spellcheck="false" autocomplete="off"><div class="pal-list" id="palList" role="listbox"></div></div>
+</div>
+
+<!-- PRIVACY CONSENT: shown after unlocking until the user decides -->
+<div class="modal" id="consentModal" role="dialog" aria-modal="true" aria-labelledby="consentTitle" hidden>
+  <div class="modal-card panel wide">
+    <h2 class="ph" id="consentTitle"><span>◈</span>YOUR DATA STAYS ON THIS PC UNLESS YOU ALLOW OTHERWISE</h2>
+    <p class="lock-sub">NYXOR has no server and no accounts, and sends nothing to its publisher. Choose which kinds of data may leave this PC. Local models need no permission. You can change this at any time in SYSTEMS → PRIVACY. <a href="/privacy" target="_blank" rel="noopener">Read the privacy policy</a>.</p>
+    <div class="flows" id="consentFlows"></div>
+    <div class="modal-actions"><button type="button" class="ghost-btn" id="consentNone">KEEP EVERYTHING LOCAL</button><span class="sp"></span><button type="button" class="send" id="consentSave">SAVE MY CHOICES</button></div>
+  </div>
+</div>
+
+<!-- REPORT AN AI ANSWER (Store policy 11.16) -->
+<div class="modal" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportTitle" hidden>
+  <div class="modal-card panel">
+    <h2 class="ph" id="reportTitle"><span>⚑</span>REPORT THIS ANSWER</h2>
+    <p class="lock-sub">The report is saved on this PC. Nothing is sent unless you press SAVE + EMAIL, which opens a draft in your email program for you to read and send.</p>
+    <label class="fld"><span>What is wrong with it?</span><select id="repCat"></select></label>
+    <label class="fld"><span>Details (optional)</span><textarea id="repNote" rows="3" maxlength="2000" spellcheck="false"></textarea></label>
+    <label class="chk"><input type="checkbox" id="repText" checked> Include the text of the answer in the report</label>
+    <div class="modal-status" id="repStatus"></div>
+    <div class="modal-actions"><button type="button" class="ghost-btn" id="repClose">CANCEL</button><span class="sp"></span><button type="button" class="ghost-btn" id="repSave">SAVE ONLY</button><button type="button" class="send" id="repSend">SAVE + EMAIL</button></div>
+  </div>
+</div>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

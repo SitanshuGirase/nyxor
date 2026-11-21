@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Runner</title><style>body{margin:0;background:#111;color:#eee;font-family:sans-serif;text-align:center}canvas{background:#222;max-width:100%}</style></head>
+<body><canvas id="game" width="800" height="300"></canvas><p>Space / Up / click to jump</p>
+<script>
+const cv = document.getElementById('game'), g = cv.getContext('2d'), W = cv.width, H = cv.height, GROUND = H - 40;
+let state = 'start', player, obs, speed, score, best = 0, spawnIn, last = 0;
+function reset() { player = { x: 60, y: GROUND - 40, w: 30, h: 40, vy: 0, on: true }; obs = []; speed = 280; score = 0; spawnIn = 1; }
+function jump() { if (state === 'start' || state === 'over') { reset(); state = 'play'; return; } if (player.on) { player.vy = -640; player.on = false; } }
+addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'Enter') { e.preventDefault(); jump(); } });
+cv.addEventListener('mousedown', jump); cv.addEventListener('touchstart', e => { e.preventDefault(); jump(); });
+function update(dt) {
+  if (state !== 'play') return;
+  speed += 6 * dt; score += speed * dt / 10;
+  player.vy += 1800 * dt; player.y += player.vy * dt;
+  if (player.y >= GROUND - player.h) { player.y = GROUND - player.h; player.vy = 0; player.on = true; }
+  spawnIn -= dt; if (spawnIn <= 0) { const h = 25 + Math.random() * 35; obs.push({ x: W + 10, y: GROUND - h, w: 18 + Math.random() * 20, h }); spawnIn = 0.8 + Math.random() * 1.1 - Math.min(0.4, speed / 2000); }
+  for (const o of obs) o.x -= speed * dt;
+  obs = obs.filter(o => o.x + o.w > -10);
+  for (const o of obs) if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) { state = 'over'; best = Math.max(best, Math.floor(score)); }
+}
+function draw() {
+  g.clearRect(0, 0, W, H); g.fillStyle = '#2a2a2a'; g.fillRect(0, GROUND, W, H - GROUND);
+  g.fillStyle = '#ff1e3c'; g.fillRect(player.x, player.y, player.w, player.h);
+  g.fillStyle = '#ddd'; for (const o of obs) g.fillRect(o.x, o.y, o.w, o.h);
+  g.fillStyle = '#fff'; g.font = '18px sans-serif'; g.fillText('Score ' + Math.floor(score) + '   Best ' + best, 14, 26);
+  if (state !== 'play') { g.font = '26px sans-serif'; g.fillText(state === 'start' ? 'Press Space to run' : 'Game over — Space to restart', W / 2 - 150, H / 2 - 20); }
+}
+function loop(t) { const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; update(dt); draw(); requestAnimationFrame(loop); }
+reset(); requestAnimationFrame(loop);
+</script></body></html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NYXOR privacy policy</title>
+<style>body{margin:0;background:#070708;color:#bcbdc6;font:15px/1.6 Inter,"Segoe UI",system-ui,sans-serif}main{max-width:780px;margin:0 auto;padding:32px 22px 80px}
+h1{font-size:26px;letter-spacing:.12em;color:#fff;margin:0 0 4px}h2{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#ececf0;margin:30px 0 8px}
+p,li{color:#bcbdc6}b{color:#ececf0}code{background:#15151a;padding:1px 6px;border:1px solid #2f2f33;border-radius:4px}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #2f2f33;padding:7px 10px;text-align:left;vertical-align:top;font-size:14px}th{color:#ececf0;background:#111114}small{color:#88888a}a{color:#ececf0}</style></head>
+<body><main>
+<h1>NYXOR</h1><small>Privacy policy &middot; last updated 20 November 2026 &middot; applies to NYXOR 2.3 and later</small>
+
+<h2>The short version</h2>
+<p>NYXOR is a local AI workspace. It runs on your PC. <b>The publisher runs no server for it, has no accounts, and receives no analytics, crash reports or usage data.</b> Your chats, memories, files and API keys are stored on your PC in an encrypted file. Data leaves your PC only when you connect a service and allow that kind of data flow, as described below.</p>
+
+<h2>What is stored, and where</h2>
+<ul>
+<li><b>On your PC only:</b> chats, memories, settings, API keys (you add them), prices and spending limits you enter, counts of the tokens and estimated costs of your model requests, reports you save about AI answers, and tool logs, all inside the encrypted file <code>nyxor.db</code>. Files that you attach or that the AI creates are stored as ordinary files in the <code>nyxor-workspace</code> folder next to it.</li>
+<li><b>Where:</b> in the data folder of the app (for the single-file build: <code>%LOCALAPPDATA%\NYXOR</code>). Removing the app removes the program; delete that folder to remove your data. Inside the app you can delete individual chats, files and memories, and download an encrypted backup.</li>
+<li><b>Encryption:</b> the file is encrypted with a key derived from your passphrase using scrypt, BLAKE2b and HMAC-SHA256. It is built from standard primitives, has not been independently audited, and does not protect a PC that already has malware while the vault is unlocked. If you forget your passphrase and lose your recovery code, the data cannot be recovered.</li>
+</ul>
+
+<h2>What can leave your PC, and only after you allow it</h2>
+<p>On first run NYXOR asks which of these you allow. You can change this at any time under <b>SYSTEMS &rarr; PRIVACY</b>. A blocked flow is not used. Local models (for example Ollama running on your PC) never need any permission because nothing leaves your PC.</p>
+<table>
+<tr><th>Flow</th><th>What is sent, and to whom</th></tr>
+<tr><td>Cloud AI models</td><td>The messages, attached text and images, and recent chat context for the model you chose, sent to the provider you connected with your own API key (for example OpenAI, Anthropic, Google, Groq, Mistral, xAI, OpenRouter, DeepSeek, Cohere, Perplexity). That provider's own privacy policy applies. Chats that contain output from the local-only AGENT mode are never sent to a cloud model.</td></tr>
+<tr><td>Web research</td><td>Your search query, to the search service whose key you added (Tavily, Brave, Serper, Exa, SerpAPI, Jina, Firecrawl). Your PC then fetches the pages it reads directly, so those sites see your IP address.</td></tr>
+<tr><td>Reader fallback</td><td>For pages that need JavaScript, only the page address is sent to the reader service r.jina.ai. Off unless you allow it.</td></tr>
+<tr><td>Cloud voice</td><td>The text to be spoken, to the text-to-speech service you connected (OpenAI-compatible or ElevenLabs). Voices that your browser marks as online (for example Edge's natural voices) are processed by the browser vendor.</td></tr>
+<tr><td>Microphone</td><td>Voice control and dictation use your browser's speech recognition. Edge and Chrome send the audio to their own online speech service. NYXOR itself never records or stores audio.</td></tr>
+<tr><td>Cloud video</td><td>Your video prompt, to Google Colab (your own notebook), Replicate or fal.ai, whichever you connected.</td></tr>
+</table>
+<p>API keys are kept in the encrypted file, never shown in the interface, and only ever sent to the provider they belong to.</p>
+
+<h2>AI-generated content and reporting</h2>
+<p>Answers are produced by the AI model you choose, not by the publisher, and can be wrong or inappropriate. Every answer has a <b>REPORT</b> button. A report is saved on your PC; you decide whether to send it. The button prepares an email to <b>{{SUPPORT_EMAIL}}</b> that you can read and edit before sending. The publisher reviews reports and acts on them, for example by changing safety rules or removing a feature.</p>
+
+<h2>The agent</h2>
+<p>AGENT mode can read files, write files, open items and run commands on your PC, only with a local model, only in the folders you allow, and in the Store build only after you approve each action. File changes are shown to you as a diff before you approve them. The optional <b>terminal panel</b> is off until you switch it on; it runs the commands you type as your own user account, inside the allowed folders, with none of NYXOR's own settings in its environment.</p>
+
+<h2>Children</h2>
+<p>NYXOR is a general-purpose AI tool, is not directed at children, and does not knowingly collect information from anyone.</p>
+
+<h2>Your choices</h2>
+<ul><li>Block any data flow at any time in SYSTEMS &rarr; PRIVACY.</li><li>Delete chats, files, memories and reports inside the app, or delete the data folder.</li><li>Use only local models and nothing leaves your PC.</li></ul>
+
+<h2>Changes and contact</h2>
+<p>If this policy changes, the date above changes and NYXOR asks again before using any new data flow. Questions: <b>{{SUPPORT_EMAIL}}</b>{{PUBLISHER_LINE}}</p>
+</main></body></html>
